@@ -37,3 +37,7 @@ have the `mon` command in your environment.
 ## Author
 
 Max Schwarz <max.schwarz@ais.uni-bonn.de>
+
+## RSL - Build Status
+
+[![Build Status](https://ci.leggedrobotics.com/buildStatus/icon?job=github_leggedrobotics/rosmon/master)](https://ci.leggedrobotics.com/job/github_leggedrobotics/job/rosmon/job/master/)
