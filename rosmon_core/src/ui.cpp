@@ -209,9 +209,19 @@ void UI::drawStatusLine()
 		else
 		{
 			printKey("A-Z", "Node actions");
+			printKey("F8", "Toggle WARN+ only");
 			printKey("F9", "Mute all");
 			printKey("F10", "Unmute all");
 			printKey("/", "Node search");
+
+			if(stderrOnly())
+			{
+				print("      ");
+				m_term.setSimpleForeground(Terminal::Black);
+				m_term.setSimpleBackground(Terminal::Magenta);
+				print("! WARN+ output only !");
+				m_style_bar.use();
+			}
 
 			if(anyMuted())
 			{
@@ -397,6 +407,10 @@ void UI::log(const LogEvent& event)
 	if(event.muted)
 		return;
 
+	// Are we supposed to show stdout?
+	if(event.channel == LogEvent::Channel::Stdout && (!event.showStdout || stderrOnly()))
+		return;
+
 	const std::string& clean = event.message;
 
 	auto it = m_nodeColorMap.find(event.source);
@@ -475,12 +489,19 @@ void UI::log(const LogEvent& event)
 	m_term.setStandardColors();
 	m_term.clearToEndOfLine();
 	fflush(stdout);
+
+	scheduleUpdate();
 }
 
 void UI::update()
 {
 	if(!m_term.interactive())
 		return;
+
+	if(!m_refresh_required)
+		return;
+
+	m_refresh_required = false;
 
 	// Disable automatic linewrap. This prevents ugliness on terminal resize.
 	m_term.setLineWrap(false);
@@ -532,6 +553,10 @@ void UI::checkTerminal()
 
 void UI::handleKey(int c)
 {
+	// Instead of trying to figure out when exactly we need a redraw, just
+	// redraw on every keystroke.
+	scheduleUpdate();
+
 	// Are we in search mode?
 	if(m_searchActive)
 	{
@@ -638,6 +663,13 @@ void UI::handleKey(int c)
 			return;
 		}
 
+		// Check for Stderr Only Toggle
+		if(c == Terminal::SK_F8)
+		{
+			toggleStderrOnly();
+			return;
+		}
+
 		// Search
 		if(c == '/')
 		{
@@ -705,6 +737,21 @@ void UI::unmuteAll()
 {
 	for(auto& n : m_monitor->nodes())
 		n->setMuted(false);
+}
+
+void UI::scheduleUpdate()
+{
+	m_refresh_required = true;
+}
+
+bool UI::stderrOnly()
+{
+	return m_stderr_only;
+}
+
+void UI::toggleStderrOnly()
+{
+	m_stderr_only = !m_stderr_only;
 }
 
 }
