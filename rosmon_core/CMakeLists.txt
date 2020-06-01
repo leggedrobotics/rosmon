@@ -1,5 +1,5 @@
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.4)
 project(rosmon_core)
 
 find_package(catkin REQUIRED COMPONENTS
@@ -33,7 +33,15 @@ else()
 	message(WARNING "Please install libpython-dev (or equivalent) for $(eval ...) support")
 endif()
 
-find_package(Boost REQUIRED COMPONENTS python REQUIRED)
+# Newer boost versions need a specific python version
+if(${PYTHON_VERSION_MAJOR} GREATER 2)
+	set(boost_python_component "python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR}")
+else()
+	set(boost_python_component "python")
+endif()
+message(STATUS "Searching for boost_python with keyword '${boost_python_component}'")
+
+find_package(Boost REQUIRED COMPONENTS ${boost_python_component} REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 
 # Specific feature tests
